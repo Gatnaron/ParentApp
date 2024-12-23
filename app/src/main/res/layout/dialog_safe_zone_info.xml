@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/zone_name_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Имя зоны"
+        android:padding="8dp"
+        android:minHeight="48dp" />
+
+    <TextView
+        android:id="@+id/zone_radius_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Радиус (км)"
+        android:padding="8dp"
+        android:minHeight="48dp" />
+
+    <TextView
+        android:id="@+id/zone_color_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Цвет (HEX)"
+        android:padding="8dp"
+        android:minHeight="48dp" />
+
+</LinearLayout>
