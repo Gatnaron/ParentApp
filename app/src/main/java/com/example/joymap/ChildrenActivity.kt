@@ -2,12 +2,16 @@ package com.example.joymap
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.EditText
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.joymap.Models.Requests.ChildLinkRequest
 import com.example.joymap.Services.ChildrenAdapter
 import com.example.joymap.Services.ParentApiService
 import com.example.joymap.databinding.ActivityChildrenBinding
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class ChildrenActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChildrenBinding
@@ -68,5 +72,40 @@ class ChildrenActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    fun showAliasDialog(childId: String) {
+        val aliases = loadAliases()
+        val currentAlias = aliases[childId] ?: ""
+
+        val builder = AlertDialog.Builder(this)
+        val input = EditText(this)
+        input.setText(currentAlias)
+
+        builder.setTitle("Введите псевдоним")
+            .setView(input)
+            .setPositiveButton("Сохранить") { _, _ ->
+                val newAlias = input.text.toString()
+                aliases[childId] = newAlias
+                saveAliases(aliases)
+                loadChildren() // Обновляем список
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun loadAliases(): MutableMap<String, String> {
+        val sharedPreferences = getSharedPreferences("ParentAppPrefs", MODE_PRIVATE)
+        val json = sharedPreferences.getString("childAliases", "{}")
+        val type = object : TypeToken<MutableMap<String, String>>() {}.type
+        return Gson().fromJson(json, type)
+    }
+
+    private fun saveAliases(aliases: MutableMap<String, String>) {
+        val sharedPreferences = getSharedPreferences("ParentAppPrefs", MODE_PRIVATE)
+        val editor = sharedPreferences.edit()
+        val json = Gson().toJson(aliases)
+        editor.putString("childAliases", json)
+        editor.apply()
     }
 }

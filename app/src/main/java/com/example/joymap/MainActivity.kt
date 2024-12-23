@@ -24,6 +24,8 @@ import com.example.joymap.Models.SafeZone
 import com.example.joymap.Services.PersistentService
 import com.example.joymap.Services.ParentApiService
 import com.example.joymap.databinding.ActivityMainBinding
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.yandex.mapkit.Animation
 import com.yandex.mapkit.MapKitFactory
 import com.yandex.mapkit.geometry.Circle
@@ -360,9 +362,13 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Генерируем отображаемые строки с именами и уровнем заряда
+        // Загружаем псевдонимы
+        val aliases = loadAliases()
+
+        // Генерируем отображаемые строки с псевдонимами и уровнем заряда
         val displayNames = children.map { child ->
-            "${child.deviceId} - Battery: ${child.battery}%"
+            val alias = aliases[child.id] ?: child.deviceId // Если псевдонима нет, используем deviceId
+            "$alias - Battery: ${child.battery}%"
         }
 
         val builder = AlertDialog.Builder(this)
@@ -379,6 +385,13 @@ class MainActivity : AppCompatActivity() {
         builder.show()
     }
 
+
+    private fun loadAliases(): Map<String, String> {
+        val sharedPreferences = getSharedPreferences("ParentAppPrefs", MODE_PRIVATE)
+        val json = sharedPreferences.getString("childAliases", "{}")
+        val type = object : TypeToken<Map<String, String>>() {}.type
+        return Gson().fromJson(json, type)
+    }
 
     private fun moveCameraToChildLocation(child: Child?) {
         if (child == null || child.location.isBlank()) {
