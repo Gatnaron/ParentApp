@@ -136,4 +136,25 @@ class ParentApiService(private val context: Context) {
             }
         })
     }
+
+    fun deleteSafeZone(zoneId: String, callback: (String) -> Unit) {
+        val url = "${BASE_URL}safezone/$zoneId"
+        val request = Request.Builder()
+            .url(url)
+            .delete()
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    callback("Safe zone deleted successfully")
+                } else {
+                    callback("Error: ${response.code}")
+                }
+            }
+            override fun onFailure(call: Call, e: IOException) {
+                callback("Server error: ${e.message}")
+            }
+        })
+    }
+
 }

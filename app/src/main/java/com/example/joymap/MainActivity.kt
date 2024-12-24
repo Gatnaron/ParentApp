@@ -125,6 +125,10 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, PersistentService::class.java)
             ContextCompat.startForegroundService(this, intent)
         }
+
+        binding.deleteSafeZoneButton.setOnClickListener {
+            showDeleteSafeZoneDialog()
+        }
     }
 
     private fun isServiceRunning(serviceClass: Class<*>): Boolean {
@@ -383,6 +387,44 @@ class MainActivity : AppCompatActivity() {
         }
         builder.setNegativeButton("Закрыть", null)
         builder.show()
+    }
+
+    private fun showDeleteSafeZoneDialog() {
+        if (safeZones.isEmpty()) {
+            Toast.makeText(this, "Нет доступных зон для удаления", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val zoneNames = safeZones.map { it.name }
+        AlertDialog.Builder(this)
+            .setTitle("Выберите зону для удаления")
+            .setItems(zoneNames.toTypedArray()) { _, which ->
+                val selectedZone = safeZones[which]
+                AlertDialog.Builder(this)
+                    .setTitle("Удалить зону?")
+                    .setMessage("Вы уверены, что хотите удалить зону '${selectedZone.name}'?")
+                    .setPositiveButton("Удалить") { _, _ ->
+                        deleteSafeZone(selectedZone)
+                    }
+                    .setNegativeButton("Отмена", null)
+                    .show()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun deleteSafeZone(zone: SafeZone) {
+        parentApiService.deleteSafeZone(zone.id) { response ->
+            runOnUiThread {
+                if (response.contains("success", true)) {
+                    safeZones.remove(zone)
+                    loadSafeZonesFromServer() // Обновляем список зон
+                    Toast.makeText(this, "Зона '${zone.name}' удалена", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Ошибка удаления: $response", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
     }
 
 
