@@ -37,6 +37,9 @@ import com.yandex.mapkit.map.PlacemarkMapObject
 import com.yandex.mapkit.mapview.MapView
 import com.yandex.runtime.image.ImageProvider
 import kotlinx.coroutines.*
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -155,7 +158,7 @@ class MainActivity : AppCompatActivity() {
             // Добавляем новый маркер
             selectedPointMarker = mapObjectCollection.addPlacemark(
                 point,
-                ImageProvider.fromResource(this, android.R.drawable.presence_online)
+                ImageProvider.fromResource(this, android.R.drawable.presence_invisible)
             )
 
             // Сохраняем точку
@@ -532,15 +535,40 @@ class MainActivity : AppCompatActivity() {
             // Обновляем статус
             childZoneStatus[child.deviceId] = isInAnyZone
 
-            // Обновление маркера на карте
-            if (childMarkers.containsKey(child.deviceId)) {
-                childMarkers[child.deviceId]?.geometry = point
+            // Проверка статуса времени
+            val markerIcon = if (child.timestamp.isNullOrEmpty()) {
+                android.R.drawable.presence_away
             } else {
-                val marker = binding.mapview.map.mapObjects.addPlacemark(
-                    point,
-                    ImageProvider.fromResource(this, android.R.drawable.star_on)
-                )
-                childMarkers[child.deviceId] = marker
+                try {
+                    val formatter = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault())
+                    val lastUpdateTime = formatter.parse(child.timestamp)?.time ?: 0
+                    val currentTime = System.currentTimeMillis()
+
+                    if ((currentTime - lastUpdateTime) <= 5 * 60 * 1000) {
+                        android.R.drawable.presence_online
+                    } else {
+                        android.R.drawable.presence_away
+                    }
+                } catch (e: Exception) {
+                    Log.e("UpdateMarker", "Ошибка разбора времени: ${child.timestamp}")
+                    android.R.drawable.presence_away
+                }
+            }
+
+            // Обновление маркера на карте
+            try {
+                if (childMarkers.containsKey(child.deviceId)) {
+                    childMarkers[child.deviceId]?.geometry = point
+                    childMarkers[child.deviceId]?.setIcon(ImageProvider.fromResource(this, markerIcon))
+                } else {
+                    val marker = binding.mapview.map.mapObjects.addPlacemark(
+                        point,
+                        ImageProvider.fromResource(this, markerIcon)
+                    )
+                    childMarkers[child.deviceId] = marker
+                }
+            } catch (e: Exception) {
+                Log.e("UpdateMarker", "Ошибка обновления маркера: ${e.message}")
             }
         } else {
             Log.e("UpdateMarker", "Неверные координаты для ребенка: ${child.deviceId}")
